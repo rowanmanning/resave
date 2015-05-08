@@ -162,12 +162,12 @@ The directory to look for bundle files in. Defaults to `process.cwd()`.
 A map of bundle URLs and source paths. The source paths are relative to the `basePath` option. In the following example requests to `/foo.css` will load, compile and serve `source/foo.scss`:
 
 ```js
-{
+app.use(resaver({
     basePath: 'source'
     bundles: {
         '/foo.css': 'foo.scss'
     }
-}
+}));
 ```
 
 #### `log` (object)
@@ -183,6 +183,14 @@ app.use(resaver({
 #### `savePath` (string)
 
 The directory to save bundled files to. This is optional, but is recommended in production environments. This should point to a directory which is also served by your application. Defaults to `null`.
+
+Example of saving bundles only in production:
+
+```js
+app.use(resaver({
+    savePath: (process.env.NODE_ENV === 'production' ? './public' : null)
+}));
+```
 
 
 Examples
