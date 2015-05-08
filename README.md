@@ -2,7 +2,9 @@
 Resave
 ======
 
-A middleware generator for compiling and saving static resources. Use with [Connect][connect] or [Express][express] and [static middleware][serve-static].
+A middleware generator for compiling and saving static resources. Use with [Connect][connect] or [Express][express] and [static middleware][serve-static]. Resave is a low-level middleware generator, here are some derivative projects:
+
+  - [Resave Browserify][resave-browserify] - A middleware for compiling and saving Browserify bundles
 
 [![NPM version][shield-npm]][info-npm]
 [![Node.js version support][shield-node]][info-node]
@@ -229,6 +231,8 @@ Copyright &copy; 2015, Rowan Manning
 [express]: http://expressjs.com/
 [npm]: https://npmjs.org/
 [serve-static]: https://github.com/expressjs/serve-static
+
+[resave-browserify]: https://github.com/rowanmanning/resave-browserify
 
 [info-dependencies]: https://gemnasium.com/rowanmanning/resave
 [info-license]: LICENSE
