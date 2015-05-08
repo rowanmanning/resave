@@ -1,6 +1,6 @@
 {
     "name": "resave",
-    "version": "0.1.1",
+    "version": "0.1.2",
 
     "description": "A middleware generator for compiling and saving static resources",
     "keywords": [ "compile", "generator", "middleware", "static" ],
