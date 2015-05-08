@@ -10,9 +10,6 @@ try {
     fs.unlinkSync(__dirname + '/public/example.txt');
 } catch (error) {}
 
-// Create a connect application
-var app = connect();
-
 // Create a resave middleware for replacing words in the source files
 var replaceWords = resave(function (bundlePath, options, done) {
 
@@ -36,6 +33,9 @@ var replaceWords = resave(function (bundlePath, options, done) {
     });
 
 });
+
+// Create a connect application
+var app = connect();
 
 // Use the serve-static middleware. This will serve the created
 // file after the first compile
