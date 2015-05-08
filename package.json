@@ -27,6 +27,7 @@
         "mocha": "~2.2",
         "mockery": "~1.4",
         "proclaim": "~3.2",
+        "serve-static": "~1.9",
         "sinon": "~1.14"
     },
 
