@@ -7,9 +7,12 @@ var mockery = require('mockery');
 var sinon = require('sinon');
 
 describe('lib/resave', function () {
-    var fs, http, mime, resave;
+    var extend, fs, http, mime, resave;
 
     beforeEach(function () {
+
+        extend = sinon.spy(require('node.extend'));
+        mockery.registerMock('node.extend', extend);
 
         fs = require('../mock/fs');
         mockery.registerMock('fs', fs);
@@ -25,6 +28,43 @@ describe('lib/resave', function () {
 
     it('should be a function', function () {
         assert.isFunction(resave);
+    });
+
+    it('should have a `defaults` property', function () {
+        assert.isObject(resave.defaults);
+    });
+
+    describe('.defaults', function () {
+        var defaults;
+
+        beforeEach(function () {
+            defaults = resave.defaults;
+        });
+
+        it('should have a `basePath` property', function () {
+            assert.strictEqual(defaults.basePath, process.cwd());
+        });
+
+        it('should have a `bundles` property', function () {
+            assert.isObject(defaults.bundles);
+        });
+
+        it('should have a `log` property', function () {
+            assert.isObject(defaults.log);
+        });
+
+        it('should have a `log.error` method', function () {
+            assert.isFunction(defaults.log.error);
+        });
+
+        it('should have a `log.info` method', function () {
+            assert.isFunction(defaults.log.info);
+        });
+
+        it('should have a `savePath` property', function () {
+            assert.isNull(defaults.savePath);
+        });
+
     });
 
     it('should return a function', function () {
@@ -43,6 +83,16 @@ describe('lib/resave', function () {
 
         it('should return a function', function () {
             assert.isFunction(resaver());
+        });
+
+        it('should default the options', function () {
+            var options = {};
+            resaver(options);
+            assert.calledOnce(extend);
+            assert.isTrue(extend.firstCall.args[0]);
+            assert.isObject(extend.firstCall.args[1]);
+            assert.strictEqual(extend.firstCall.args[2], resave.defaults);
+            assert.strictEqual(extend.firstCall.args[3], options);
         });
 
         describe('returned function (middleware)', function () {
