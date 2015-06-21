@@ -53,8 +53,8 @@ app.use(replaceWords({
     },
     savePath: __dirname + '/public',
     words: {
-        'hello': 'ohai',
-        'world': 'planet'
+        hello: 'ohai',
+        world: 'planet'
     }
 }));
 
