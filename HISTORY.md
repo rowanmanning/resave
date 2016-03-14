@@ -1,6 +1,12 @@
 
 # History
 
+## 1.0.0 (2016-03-14)
+
+  * First stable release
+  * Support Node.js 4+ only
+  * Update dependencies
+
 ## 0.1.5 pre-release (2016-01-09)
 
   * Add Node.js 5.x support
