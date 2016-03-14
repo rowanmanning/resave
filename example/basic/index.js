@@ -1,20 +1,20 @@
 'use strict';
 
-var connect = require('connect');
-var fs = require('fs');
-var resave = require('../..');
-var serveStatic = require('serve-static');
+const connect = require('connect');
+const fs = require('fs');
+const resave = require('../..');
+const serveStatic = require('serve-static');
 
 // Remove the existing example.txt if there is one (just for the example!)
 try {
-    fs.unlinkSync(__dirname + '/public/example.txt');
+    fs.unlinkSync(`${__dirname}/public/example.txt`);
 } catch (error) {}
 
 // Create a resave middleware for replacing words in the source files
-var replaceWords = resave(function (bundlePath, options, done) {
+const replaceWords = resave((bundlePath, options, done) => {
 
     // Load the bundle
-    fs.readFile(bundlePath, 'utf-8', function (error, content) {
+    fs.readFile(bundlePath, 'utf-8', (error, content) => {
 
         // If the file read fails, callback with an error
         if (error) {
@@ -22,8 +22,8 @@ var replaceWords = resave(function (bundlePath, options, done) {
         }
 
         // Replace words in the content
-        Object.keys(options.words).forEach(function (word) {
-            var replace = options.words[word];
+        Object.keys(options.words).forEach(word => {
+            const replace = options.words[word];
             content = content.replace(word, replace);
         });
 
@@ -35,15 +35,15 @@ var replaceWords = resave(function (bundlePath, options, done) {
 });
 
 // Create a connect application
-var app = connect();
+const app = connect();
 
 // Use the serve-static middleware. This will serve the created
 // file after the first compile
-app.use(serveStatic(__dirname + '/public'));
+app.use(serveStatic(`${__dirname}/public`));
 
 // Use the middleware
 app.use(replaceWords({
-    basePath: __dirname + '/source',
+    basePath: `${__dirname}/source`,
     bundles: {
         '/example.txt': 'example.txt'
     },
@@ -51,7 +51,7 @@ app.use(replaceWords({
         error: console.log.bind(console),
         info: console.log.bind(console)
     },
-    savePath: __dirname + '/public',
+    savePath: `${__dirname}/public`,
     words: {
         hello: 'ohai',
         world: 'planet'
@@ -59,15 +59,15 @@ app.use(replaceWords({
 }));
 
 // Use a dummy error handler
-app.use(function (error, request, response, next) {
+app.use((error, request, response, next) => {
     // jshint unused: false
     response.writeHead(500);
-    response.end('500 Server Error:\n\n' + error.stack);
+    response.end(`500 Server Error:\n\n${error.stack}`);
 });
 
 // Listen on a port
-var port = process.env.PORT || 3000;
-app.listen(port, function () {
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
     console.log('Application running on port %s', port);
     console.log('Visit http://localhost:%s/ in your browser', port);
 });

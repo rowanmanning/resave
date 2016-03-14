@@ -1,15 +1,18 @@
-// jshint maxstatements: false
-// jscs:disable disallowMultipleVarDecl, maximumLineLength
+// jscs:disable maximumLineLength
 'use strict';
 
-var assert = require('proclaim');
-var mockery = require('mockery');
-var sinon = require('sinon');
+const assert = require('proclaim');
+const mockery = require('mockery');
+const sinon = require('sinon');
 
-describe('lib/resave', function () {
-    var extend, fs, http, mime, resave;
+describe('lib/resave', () => {
+    let extend;
+    let fs;
+    let http;
+    let mime;
+    let resave;
 
-    beforeEach(function () {
+    beforeEach(() => {
 
         extend = sinon.spy(require('node.extend'));
         mockery.registerMock('node.extend', extend);
@@ -26,67 +29,69 @@ describe('lib/resave', function () {
 
     });
 
-    it('should be a function', function () {
+    it('should be a function', () => {
         assert.isFunction(resave);
     });
 
-    it('should have a `defaults` property', function () {
+    it('should have a `defaults` property', () => {
         assert.isObject(resave.defaults);
     });
 
-    describe('.defaults', function () {
-        var defaults;
+    describe('.defaults', () => {
+        let defaults;
 
-        beforeEach(function () {
+        beforeEach(() => {
             defaults = resave.defaults;
         });
 
-        it('should have a `basePath` property', function () {
+        it('should have a `basePath` property', () => {
             assert.strictEqual(defaults.basePath, process.cwd());
         });
 
-        it('should have a `bundles` property', function () {
+        it('should have a `bundles` property', () => {
             assert.isObject(defaults.bundles);
         });
 
-        it('should have a `log` property', function () {
+        it('should have a `log` property', () => {
             assert.isObject(defaults.log);
         });
 
-        it('should have a `log.error` method', function () {
+        it('should have a `log.error` method', () => {
             assert.isFunction(defaults.log.error);
         });
 
-        it('should have a `log.info` method', function () {
+        it('should have a `log.info` method', () => {
             assert.isFunction(defaults.log.info);
         });
 
-        it('should have a `savePath` property', function () {
+        it('should have a `savePath` property', () => {
             assert.isNull(defaults.savePath);
         });
 
     });
 
-    it('should return a function', function () {
-        var resaver = resave();
+    it('should return a function', () => {
+        const resaver = resave();
         assert.isFunction(resaver);
     });
 
-    describe('returned function (resaver)', function () {
-        var content, createBundle, resaver;
+    describe('returned (resaver)', () => {
+        let content;
+        let createBundle;
+        let resaver;
 
-        beforeEach(function () {
+        beforeEach(() => {
             content = 'content';
             createBundle = sinon.stub();
             resaver = resave(createBundle);
         });
 
-        it('should return a function', function () {
+        it('should return a function', () => {
             assert.isFunction(resaver());
         });
 
-        it('should default the options', function () {
-            var options = {};
+        it('should default the options', () => {
+            const options = {};
             resaver(options);
             assert.calledOnce(extend);
             assert.isTrue(extend.firstCall.args[0]);
@@ -95,10 +100,14 @@ describe('lib/resave', function () {
             assert.strictEqual(extend.firstCall.args[3], options);
         });
 
-        describe('returned function (middleware)', function () {
-            var middleware, next, options, request, response;
+        describe('returned (middleware)', () => {
+            let middleware;
+            let next;
+            let options;
+            let request;
+            let response;
 
-            beforeEach(function () {
+            beforeEach(() => {
                 options = {
                     basePath: '/base/path',
                     bundles: {
@@ -116,58 +125,58 @@ describe('lib/resave', function () {
                 next = sinon.spy();
             });
 
-            describe('when the request URL matches a bundle URL', function () {
+            describe('when the request URL matches a bundle URL', () => {
 
-                beforeEach(function () {
+                beforeEach(() => {
                     request.url = '/foo.css?bar=baz';
                     middleware = resaver(options);
                     middleware(request, response, next);
                 });
 
-                it('should call `createBundle`', function () {
+                it('should call `createBundle`', () => {
                     assert.calledOnce(createBundle);
                     assert.calledWith(createBundle, '/base/path/source/foo.scss', options);
                     assert.isFunction(createBundle.firstCall.args[2]);
                 });
 
-                describe('and bundling is successful', function () {
+                describe('and bundling is successful', () => {
 
-                    beforeEach(function () {
+                    beforeEach(() => {
                         createBundle.yields(null, content);
                         middleware = resaver(options);
                         middleware(request, response, next);
                     });
 
-                    it('should log that the bundle was successful', function () {
+                    it('should log that the bundle was successful', () => {
                         assert.calledWith(options.log.info, 'Bundle "/foo.css" compiled');
                     });
 
-                    describe('and `options.savePath` is set', function () {
+                    describe('and `options.savePath` is set', () => {
 
-                        beforeEach(function () {
+                        beforeEach(() => {
                             response.writeHead.reset();
                             response.end.reset();
                             options.savePath = '/save/path';
                             middleware = resaver(options);
                         });
 
-                        describe('and saving is successful', function () {
+                        describe('and saving is successful', () => {
 
-                            beforeEach(function () {
+                            beforeEach(() => {
                                 fs.writeFile.withArgs('/save/path/foo.css', content).yields(null);
                                 middleware(request, response, next);
                             });
 
-                            it('should save the bundle result to the file system', function () {
+                            it('should save the bundle result to the file system', () => {
                                 assert.calledOnce(fs.writeFile);
                                 assert.calledWith(fs.writeFile, '/save/path/foo.css', content);
                             });
 
-                            it('should log that the save was successful', function () {
+                            it('should log that the save was successful', () => {
                                 assert.calledWith(options.log.info, 'Bundle "/foo.css" saved');
                             });
 
-                            it('should respond with the bundle result', function () {
+                            it('should respond with the bundle result', () => {
                                 assert.calledOnce(response.writeHead);
                                 assert.calledWith(response.writeHead, 200);
                                 assert.deepEqual(response.writeHead.firstCall.args[1], {
@@ -177,31 +186,31 @@ describe('lib/resave', function () {
                                 assert.calledWith(response.end, content);
                             });
 
-                            it('should log that the bundle was served', function () {
+                            it('should log that the bundle was served', () => {
                                 assert.calledWith(options.log.info, 'Bundle "/foo.css" served');
                             });
 
                         });
 
-                        describe('and saving is unsuccessful', function () {
-                            var error;
+                        describe('and saving is unsuccessful', () => {
+                            let error;
 
-                            beforeEach(function () {
+                            beforeEach(() => {
                                 error = new Error('...');
                                 fs.writeFile.withArgs('/save/path/foo.css', content).yields(error);
                                 middleware(request, response, next);
                             });
 
-                            it('should not respond', function () {
+                            it('should not respond', () => {
                                 assert.notCalled(response.writeHead);
                                 assert.notCalled(response.end);
                             });
 
-                            it('should log that the save was unsuccessful', function () {
-                                assert.calledWith(options.log.error, 'Bundle "/foo.css" failed to save: ' + error.stack);
+                            it('should log that the save was unsuccessful', () => {
+                                assert.calledWith(options.log.error, `Bundle "/foo.css" failed to save: ${error.stack}`);
                             });
 
-                            it('should call `next` with the file system error', function () {
+                            it('should call `next` with the file system error', () => {
                                 assert.calledOnce(next);
                                 assert.calledWith(next, error);
                             });
@@ -210,9 +219,9 @@ describe('lib/resave', function () {
 
                     });
 
-                    describe('and `options.savePath` is `null`', function () {
+                    describe('and `options.savePath` is `null`', () => {
 
-                        beforeEach(function () {
+                        beforeEach(() => {
                             response.writeHead.reset();
                             response.end.reset();
                             request.url = '/foo.css?bar=baz';
@@ -220,11 +229,11 @@ describe('lib/resave', function () {
                             middleware(request, response, next);
                         });
 
-                        it('should not save the bundle result to the file system', function () {
+                        it('should not save the bundle result to the file system', () => {
                             assert.notCalled(fs.writeFile);
                         });
 
-                        it('should respond with the bundle result', function () {
+                        it('should respond with the bundle result', () => {
                             assert.calledOnce(response.writeHead);
                             assert.calledWith(response.writeHead, 200);
                             assert.deepEqual(response.writeHead.firstCall.args[1], {
@@ -234,7 +243,7 @@ describe('lib/resave', function () {
                             assert.calledWith(response.end, content);
                         });
 
-                        it('should log that the bundle was served', function () {
+                        it('should log that the bundle was served', () => {
                             assert.calledWith(options.log.info, 'Bundle "/foo.css" served');
                         });
 
@@ -242,25 +251,25 @@ describe('lib/resave', function () {
 
                 });
 
-                describe('and bundling is unsuccessful', function () {
-                    var error;
+                describe('and bundling is unsuccessful', () => {
+                    let error;
 
-                    beforeEach(function () {
+                    beforeEach(() => {
                         error = new Error('...');
                         createBundle.yields(error);
                         middleware(request, response, next);
                     });
 
-                    it('should not respond', function () {
+                    it('should not respond', () => {
                         assert.notCalled(response.writeHead);
                         assert.notCalled(response.end);
                     });
 
-                    it('should log that the bundle was unsuccessful', function () {
-                        assert.calledWith(options.log.error, 'Bundle "/foo.css" failed to compile: ' + error.stack);
+                    it('should log that the bundle was unsuccessful', () => {
+                        assert.calledWith(options.log.error, `Bundle "/foo.css" failed to compile: ${error.stack}`);
                     });
 
-                    it('should call `next` with the bundle error', function () {
+                    it('should call `next` with the bundle error', () => {
                         assert.calledOnce(next);
                         assert.calledWith(next, error);
                     });
@@ -269,19 +278,19 @@ describe('lib/resave', function () {
 
             });
 
-            describe('when the request URL does not match a bundle URL', function () {
+            describe('when the request URL does not match a bundle URL', () => {
 
-                beforeEach(function () {
+                beforeEach(() => {
                     request.url = '/bar.css';
                     middleware = resaver(options);
                     middleware(request, response, next);
                 });
 
-                it('should not call `createBundle`', function () {
+                it('should not call `createBundle`', () => {
                     assert.notCalled(createBundle);
                 });
 
-                it('should call `next` with no error', function () {
+                it('should call `next` with no error', () => {
                     assert.calledOnce(next);
                     assert.isUndefined(next.firstCall.args[0]);
                 });

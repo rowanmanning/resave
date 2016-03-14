@@ -15,13 +15,13 @@ A middleware generator for compiling and saving static resources. Use with [Conn
 [![MIT licensed][shield-license]][info-license]
 
 ```js
-var connect = require('connect');
-var resave = require('resave');
-var serveStatic = require('serve-static');
+const connect = require('connect');
+const resave = require('resave');
+const serveStatic = require('serve-static');
 
-var app = connect();
+const app = connect();
 
-var resaver = resave(function (bundlePath, options, done) {
+const resaver = resave((bundlePath, options, done) => {
     // ... do something with the bundle path and options ...
     done(null, content);
 })
@@ -61,19 +61,19 @@ Getting Started
 Require in Resave:
 
 ```js
-var resave = require('resave');
+const resave = require('resave');
 ```
 
 Create a resaver, this should be a function which accepts a file path, some options, and a callback. The following resaver will load the bundle file, replace words inside it based on some options, and then callback with the result:
 
 ```js
-var replaceWords = resave(function (bundlePath, options, done) {
-    fs.readFile(bundlePath, 'utf-8', function (error, content) {
+const replaceWords = resave((bundlePath, options, done) => {
+    fs.readFile(bundlePath, 'utf-8', (error, content) => {
         if (error) {
             return done(error);
         }
-        Object.keys(options.words).forEach(function (word) {
-            var replace = options.words[word];
+        Object.keys(options.words).forEach(word => {
+            const replace = options.words[word];
             content = content.replace(word, replace);
         });
         done(null, content);
@@ -84,30 +84,30 @@ var replaceWords = resave(function (bundlePath, options, done) {
 Now you can use the created middleware to serve up files:
 
 ```js
-var connect = require('connect');
+const connect = require('connect');
 
-var app = connect();
+const app = connect();
 
 app.use(replaceWords({
     bundles: {
         '/example.txt': 'source/example.txt'
     },
     words: {
-        'hello': 'ohai',
-        'world': 'planet'
+        hello: 'ohai',
+        world: 'planet'
     }
 }));
 ```
 
 In the example above, requests to `/example.txt` will load the file `/source/example.txt`, replace the configured words inside it, and serve it up.
 
-This isn't great in production enviroments, your resaver function could be quite slow. In these cases you can save the output to a file which will get served by another middleware:
+This isn't great in production environments, your resaver function could be quite slow. In these cases you can save the output to a file which will get served by another middleware:
 
 ```js
-var connect = require('connect');
-var serveStatic = require('serve-static');
+const connect = require('connect');
+const serveStatic = require('serve-static');
 
-var app = connect();
+const app = connect();
 
 app.use(serveStatic('public'));
 
@@ -132,7 +132,9 @@ Usage
 Create a resaver with a passed in `createBundle` function:
 
 ```js
-var renderer = resave(function () {});
+const renderer = resave((bundlePath, options, done) => {
+    // ...
+});
 ```
 
 The `createBundle` function should accept three arguments:
@@ -176,7 +178,7 @@ app.use(resaver({
 
 #### `log` (object)
 
-An object which implments the methods `error` and `info` which will be used to report errors and request information.
+An object which implements the methods `error` and `info` which will be used to report errors and request information.
 
 ```js
 app.use(resaver({
