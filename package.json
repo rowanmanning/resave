@@ -1,40 +1,41 @@
 {
-    "name": "resave",
-    "version": "1.0.1",
-
-    "description": "A middleware generator for compiling and saving static resources",
-    "keywords": [ "compile", "generator", "middleware", "static" ],
-    "author": "Rowan Manning (http://rowanmanning.com/)",
-
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/rowanmanning/resave.git"
-    },
-    "homepage": "https://github.com/rowanmanning/resave",
-    "bugs": "https://github.com/rowanmanning/resave/issues",
-    "license": "MIT",
-
-    "engines": {
-        "node": ">=4"
-    },
-    "dependencies": {
-        "mime": "~1.3",
-        "node.extend": "~1.1"
-    },
-    "devDependencies": {
-        "connect": "^3",
-        "istanbul": "~0.4",
-        "jscs": "^2",
-        "jshint": "^2",
-        "mocha": "^2",
-        "mockery": "^1",
-        "proclaim": "^3",
-        "serve-static": "^1",
-        "sinon": "^1"
-    },
-
-    "main": "./lib/resave.js",
-    "scripts": {
-        "test": "make ci"
-    }
+  "name": "resave",
+  "version": "1.0.1",
+  "description": "A middleware generator for compiling and saving static resources",
+  "keywords": [
+    "compile",
+    "generator",
+    "middleware",
+    "static"
+  ],
+  "author": "Rowan Manning (http://rowanmanning.com/)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rowanmanning/resave.git"
+  },
+  "homepage": "https://github.com/rowanmanning/resave",
+  "bugs": "https://github.com/rowanmanning/resave/issues",
+  "license": "MIT",
+  "engines": {
+    "node": ">=4"
+  },
+  "dependencies": {
+    "mime": "~1.3",
+    "node.extend": "~1.1"
+  },
+  "devDependencies": {
+    "connect": "^3",
+    "istanbul": "~0.4",
+    "jscs": "^2",
+    "jshint": "^2",
+    "mocha": "^2",
+    "mockery": "^1",
+    "proclaim": "^3",
+    "serve-static": "^1",
+    "sinon": "^1"
+  },
+  "main": "./lib/resave.js",
+  "scripts": {
+    "test": "make ci"
+  }
 }
