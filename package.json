@@ -32,7 +32,7 @@
     "mockery": "^1",
     "proclaim": "^3",
     "serve-static": "^1",
-    "sinon": "^1"
+    "sinon": "^9"
   },
   "main": "./lib/resave.js",
   "scripts": {
