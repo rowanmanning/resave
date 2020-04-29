@@ -25,39 +25,39 @@ describe('lib/resave', () => {
 		assert.isFunction(resave);
 	});
 
-	it('has a `defaults` property', () => {
-		assert.isObject(resave.defaults);
+	it('has a `defaultOptions` property', () => {
+		assert.isObject(resave.defaultOptions);
 	});
 
-	describe('.defaults', () => {
-		let defaults;
+	describe('.defaultOptions', () => {
+		let defaultOptions;
 
 		beforeEach(() => {
-			defaults = resave.defaults;
+			defaultOptions = resave.defaultOptions;
 		});
 
 		it('has a `basePath` property', () => {
-			assert.strictEqual(defaults.basePath, process.cwd());
+			assert.strictEqual(defaultOptions.basePath, process.cwd());
 		});
 
 		it('has a `bundles` property', () => {
-			assert.isObject(defaults.bundles);
+			assert.isObject(defaultOptions.bundles);
 		});
 
 		it('has a `log` property', () => {
-			assert.isObject(defaults.log);
+			assert.isObject(defaultOptions.log);
 		});
 
 		it('has a `log.error` method', () => {
-			assert.isFunction(defaults.log.error);
+			assert.isFunction(defaultOptions.log.error);
 		});
 
 		it('has a `log.info` method', () => {
-			assert.isFunction(defaults.log.info);
+			assert.isFunction(defaultOptions.log.info);
 		});
 
 		it('has a `savePath` property', () => {
-			assert.isNull(defaults.savePath);
+			assert.isNull(defaultOptions.savePath);
 		});
 
 	});
@@ -93,7 +93,7 @@ describe('lib/resave', () => {
 			resaver(options);
 			assert.calledOnce(Object.assign);
 			assert.isObject(Object.assign.firstCall.args[0]);
-			assert.strictEqual(Object.assign.firstCall.args[1], resave.defaults);
+			assert.strictEqual(Object.assign.firstCall.args[1], resave.defaultOptions);
 			assert.strictEqual(Object.assign.firstCall.args[2], options);
 			Object.assign.restore();
 		});
