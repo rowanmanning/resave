@@ -92,31 +92,42 @@ describe('lib/resave', () => {
 
 				describe('when the request URL matches a bundle URL', () => {
 
-					beforeEach(async () => {
+					beforeEach(() => {
 						request.path = '/mock-bundle.css';
-						await middleware(request, response, next);
-					});
-
-					it('calls `createBundleFunction` with the bundle path and defaulted options', () => {
-						assert.calledOnce(createBundleFunction);
-						assert.calledWithExactly(createBundleFunction, '/base/path/source/mock-bundle.scss', defaultedOptions);
 					});
 
 					describe('and bundling is successful', () => {
 
 						describe('and `options.savePath` is set', () => {
 
-							beforeEach(() => {
+							beforeEach(async () => {
+								createBundleFunction.resetHistory();
 								defaultedOptions.log.info.resetHistory();
 								defaultedOptions.log.error.resetHistory();
 								response.set.resetHistory();
 								response.send.resetHistory();
 								defaultedOptions.savePath = '/save/path';
+								await middleware(request, response, next);
+							});
+
+							it('calls `createBundleFunction` with paths and defaulted options', () => {
+								assert.calledOnce(createBundleFunction);
+								assert.calledWith(createBundleFunction, {
+									options: defaultedOptions,
+									requestPath: '/mock-bundle.css',
+									sourcePath: '/base/path/source/mock-bundle.scss',
+									savePath: '/save/path/mock-bundle.css'
+								});
 							});
 
 							describe('and saving is successful', () => {
 
 								beforeEach(async () => {
+									fs.promises.writeFile.resetHistory();
+									defaultedOptions.log.info.resetHistory();
+									defaultedOptions.log.error.resetHistory();
+									response.set.resetHistory();
+									response.send.resetHistory();
 									fs.promises.writeFile.resolves();
 									await middleware(request, response, next);
 								});
@@ -151,6 +162,10 @@ describe('lib/resave', () => {
 								let saveError;
 
 								beforeEach(done => {
+									defaultedOptions.log.info.resetHistory();
+									defaultedOptions.log.error.resetHistory();
+									response.set.resetHistory();
+									response.send.resetHistory();
 									saveError = new Error('mock save error');
 									fs.promises.writeFile.rejects(saveError);
 									middleware(request, response, error => {
@@ -179,12 +194,23 @@ describe('lib/resave', () => {
 						describe('and `options.savePath` is `null`', () => {
 
 							beforeEach(async () => {
+								createBundleFunction.resetHistory();
 								defaultedOptions.log.info.resetHistory();
 								defaultedOptions.log.error.resetHistory();
 								response.set.resetHistory();
 								response.send.resetHistory();
 								defaultedOptions.savePath = null;
 								await middleware(request, response, next);
+							});
+
+							it('calls `createBundleFunction` with paths and defaulted options', () => {
+								assert.calledOnce(createBundleFunction);
+								assert.calledWith(createBundleFunction, {
+									options: defaultedOptions,
+									requestPath: '/mock-bundle.css',
+									sourcePath: '/base/path/source/mock-bundle.scss',
+									savePath: null
+								});
 							});
 
 							it('does not save the bundle result to the file system', () => {

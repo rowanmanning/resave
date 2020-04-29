@@ -11,10 +11,10 @@ try {
 } catch (error) {}
 
 // Create a resave middleware for replacing words in the source files
-const replaceWords = resave(async (filePath, options) => {
+const replaceWords = resave(async ({sourcePath, options}) => {
 
 	// Load the bundle file
-	let fileContent = await readFile(filePath, 'utf-8');
+	let fileContent = await readFile(sourcePath, 'utf-8');
 
 	// Replace words in the content
 	Object.keys(options.words).forEach(word => {

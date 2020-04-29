@@ -57,8 +57,8 @@ const resave = require('resave');
 Create a resaver, this should be a function which accepts a file path and some options, and returns a `Promise`. Using async functions is the easiest way to do this. The following resaver will load the bundle file, replace words inside it based on some options, and then callback with the result:
 
 ```js
-const replaceWords = resave(async (bundlePath, options) => {
-    let content = await fs.promises.readFile(bundlePath, 'utf-8');
+const replaceWords = resave(async ({sourcePath, options}) => {
+    let content = await fs.promises.readFile(sourcePath, 'utf-8');
     Object.keys(options.words).forEach(word => {
         const replace = options.words[word];
         content = content.replace(word, replace);
@@ -115,15 +115,17 @@ In the example above the first time `/example.txt` is requested it will get comp
 Create a resaver with a passed in `createBundle` function:
 
 ```js
-const renderer = resave(async (bundlePath, options) => {
+const renderer = resave(async bundleDetails => {
     // ...
 });
 ```
 
-The `createBundle` function should accept two arguments:
+The `createBundle` function should accept one argument which is an object. This object will have the following properties:
 
-  - `bundlePath (string)`: The path to a requested bundle
-  - `options (object)`: The options object passed into the middleware
+  * `options (object)`: The options object passed into the middleware
+  * `requestPath (string)`: The request path that lead to this bundle being generated
+  * `sourcePath (string)`: The full path to the source file to create a bundle from
+  * `savePath (string)`: The full path where the file will be saved. Or `null` if no file will be saved
 
 It must return a `Promise` which resolves with a string representing the bundle contents.
 
