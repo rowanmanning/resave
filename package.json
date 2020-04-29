@@ -21,8 +21,7 @@
     "npm": ">=6.9.0"
   },
   "dependencies": {
-    "mime": "^2.4.4",
-    "node.extend": "^2.0.2"
+    "mime": "^2.4.4"
   },
   "devDependencies": {
     "@rowanmanning/eslint-config": "^2.1.0",

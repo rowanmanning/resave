@@ -5,15 +5,11 @@ const mockery = require('mockery');
 const sinon = require('sinon');
 
 describe('lib/resave', () => {
-	let extend;
 	let fs;
 	let mime;
 	let resave;
 
 	beforeEach(() => {
-
-		extend = sinon.spy(require('node.extend'));
-		mockery.registerMock('node.extend', extend);
 
 		fs = require('../mock/node/fs');
 		mockery.registerMock('fs', fs);
@@ -87,13 +83,19 @@ describe('lib/resave', () => {
 		});
 
 		it('defaults the options', () => {
-			const options = {};
+			const options = {
+				isUserOptions: true
+			};
+			const defaultedOptions = {
+				isDefaultOptions: true
+			};
+			sinon.stub(Object, 'assign').returns(defaultedOptions);
 			resaver(options);
-			assert.calledOnce(extend);
-			assert.isTrue(extend.firstCall.args[0]);
-			assert.isObject(extend.firstCall.args[1]);
-			assert.strictEqual(extend.firstCall.args[2], resave.defaults);
-			assert.strictEqual(extend.firstCall.args[3], options);
+			assert.calledOnce(Object.assign);
+			assert.isObject(Object.assign.firstCall.args[0]);
+			assert.strictEqual(Object.assign.firstCall.args[1], resave.defaults);
+			assert.strictEqual(Object.assign.firstCall.args[2], options);
+			Object.assign.restore();
 		});
 
 		describe('returned (middleware)', () => {
