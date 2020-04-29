@@ -3,5 +3,5 @@
 const sinon = require('sinon');
 
 module.exports = {
-    lookup: sinon.stub()
+	writeFile: sinon.stub()
 };
