@@ -12,8 +12,8 @@ const resave = require('resave');
 
 const app = express();
 
-const resaver = resave(async (bundlePath, options) => {
-    // ... do something with the bundle path and options ...
+const resaver = resave(async ({sourcePath, options}) => {
+    // ... do something with the source path and options ...
     return 'some content';
 })
 
