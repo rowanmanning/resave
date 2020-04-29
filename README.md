@@ -12,9 +12,9 @@ const resave = require('resave');
 
 const app = express();
 
-const resaver = resave((bundlePath, options, next) => {
+const resaver = resave(async (bundlePath, options) => {
     // ... do something with the bundle path and options ...
-    next(null, content);
+    return 'some content';
 })
 
 app.use(express.static('public'));
@@ -54,20 +54,16 @@ Load the library into your code with a `require` call:
 const resave = require('resave');
 ```
 
-Create a resaver, this should be a function which accepts a file path, some options, and a callback. The following resaver will load the bundle file, replace words inside it based on some options, and then callback with the result:
+Create a resaver, this should be a function which accepts a file path and some options, and returns a `Promise`. Using async functions is the easiest way to do this. The following resaver will load the bundle file, replace words inside it based on some options, and then callback with the result:
 
 ```js
-const replaceWords = resave((bundlePath, options, next) => {
-    fs.readFile(bundlePath, 'utf-8', (error, content) => {
-        if (error) {
-            return next(error);
-        }
-        Object.keys(options.words).forEach(word => {
-            const replace = options.words[word];
-            content = content.replace(word, replace);
-        });
-        next(null, content);
+const replaceWords = resave(async (bundlePath, options) => {
+    let content = await fs.promises.readFile(bundlePath, 'utf-8');
+    Object.keys(options.words).forEach(word => {
+        const replace = options.words[word];
+        content = content.replace(word, replace);
     });
+    return content;
 });
 ```
 
@@ -119,16 +115,17 @@ In the example above the first time `/example.txt` is requested it will get comp
 Create a resaver with a passed in `createBundle` function:
 
 ```js
-const renderer = resave((bundlePath, options, next) => {
+const renderer = resave(async (bundlePath, options) => {
     // ...
 });
 ```
 
-The `createBundle` function should accept three arguments:
+The `createBundle` function should accept two arguments:
 
   - `bundlePath (string)`: The path to a requested bundle
   - `options (object)`: The options object passed into the middleware
-  - `next (function)`: A callback to use when the bundling is complete
+
+It must return a `Promise` which resolves with a string representing the bundle contents.
 
 The middleware functions returned by a `resave` call can be used with Express, and they must be called with an [options object](#middleware-options):
 

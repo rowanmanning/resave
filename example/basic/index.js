@@ -1,36 +1,28 @@
 'use strict';
 
 const express = require('express');
-const fs = require('fs');
+const {readFile} = require('fs').promises;
 const resave = require('../..');
+const {unlinkSync} = require('fs');
 
 // Remove the existing example.txt if there is one (just for the example!)
 try {
-	fs.unlinkSync(`${__dirname}/public/example.txt`);
+	unlinkSync(`${__dirname}/public/example.txt`);
 } catch (error) {}
 
 // Create a resave middleware for replacing words in the source files
-const replaceWords = resave((bundlePath, options, done) => {
+const replaceWords = resave(async (filePath, options) => {
 
-	// Load the bundle
-	fs.readFile(bundlePath, 'utf-8', (error, content) => {
+	// Load the bundle file
+	let fileContent = await readFile(filePath, 'utf-8');
 
-		// If the file read fails, callback with an error
-		if (error) {
-			return done(error);
-		}
-
-		// Replace words in the content
-		Object.keys(options.words).forEach(word => {
-			const replace = options.words[word];
-			content = content.replace(word, replace);
-		});
-
-		// Callback with the replaced content
-		done(null, content);
-
+	// Replace words in the content
+	Object.keys(options.words).forEach(word => {
+		const replace = options.words[word];
+		fileContent = fileContent.replace(word, replace);
 	});
 
+	return fileContent;
 });
 
 // Create an Express application

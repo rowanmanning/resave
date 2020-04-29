@@ -21,12 +21,253 @@ describe('lib/resave', () => {
 
 	});
 
-	it('is a function', () => {
-		assert.isFunction(resave);
-	});
+	describe('resave(createBundleFunction)', () => {
+		let createBundleFunction;
+		let resaver;
 
-	it('has a `defaultOptions` property', () => {
-		assert.isObject(resave.defaultOptions);
+		beforeEach(() => {
+			createBundleFunction = sinon.stub().resolves('mock-bundle-content');
+			resaver = resave(createBundleFunction);
+		});
+
+		it('returns a function (resaver)', () => {
+			assert.isFunction(resaver);
+		});
+
+		describe('resaver(options)', () => {
+			let defaultedOptions;
+			let middleware;
+			let options;
+
+			beforeEach(() => {
+				options = {
+					isUserOptions: true
+				};
+				defaultedOptions = {
+					isDefaultOptions: true,
+					basePath: '/base/path',
+					bundles: {
+						'/mock-bundle.css': '/source/mock-bundle.scss'
+					},
+					log: {
+						error: sinon.spy(),
+						info: sinon.spy()
+					},
+					savePath: null
+				};
+				sinon.stub(Object, 'assign').returns(defaultedOptions);
+				middleware = resaver(options);
+			});
+
+			afterEach(() => {
+				Object.assign.restore();
+			});
+
+			it('defaults the options', () => {
+				assert.calledOnce(Object.assign);
+				assert.isObject(Object.assign.firstCall.args[0]);
+				assert.strictEqual(Object.assign.firstCall.args[1], resave.defaultOptions);
+				assert.strictEqual(Object.assign.firstCall.args[2], options);
+			});
+
+			it('returns a function (middleware)', () => {
+				assert.isFunction(middleware);
+			});
+
+			describe('middleware(request, response, next)', () => {
+				let caughtError;
+				let next;
+				let request;
+				let response;
+
+				beforeEach(() => {
+					mime.getType.withArgs('/mock-bundle.css').returns('text/css');
+					request = {};
+					response = {
+						set: sinon.stub(),
+						send: sinon.stub()
+					};
+					next = sinon.spy();
+				});
+
+				describe('when the request URL matches a bundle URL', () => {
+
+					beforeEach(async () => {
+						request.path = '/mock-bundle.css';
+						await middleware(request, response, next);
+					});
+
+					it('calls `createBundleFunction` with the bundle path and defaulted options', () => {
+						assert.calledOnce(createBundleFunction);
+						assert.calledWithExactly(createBundleFunction, '/base/path/source/mock-bundle.scss', defaultedOptions);
+					});
+
+					describe('and bundling is successful', () => {
+
+						describe('and `options.savePath` is set', () => {
+
+							beforeEach(() => {
+								defaultedOptions.log.info.resetHistory();
+								defaultedOptions.log.error.resetHistory();
+								response.set.resetHistory();
+								response.send.resetHistory();
+								defaultedOptions.savePath = '/save/path';
+							});
+
+							describe('and saving is successful', () => {
+
+								beforeEach(async () => {
+									fs.promises.writeFile.resolves();
+									await middleware(request, response, next);
+								});
+
+								it('saves the bundle result to the file system', () => {
+									assert.calledOnce(fs.promises.writeFile);
+									assert.calledWith(fs.promises.writeFile, '/save/path/mock-bundle.css', 'mock-bundle-content');
+								});
+
+								it('logs that the save was successful', () => {
+									assert.calledWith(defaultedOptions.log.info, 'Bundle "/mock-bundle.css" saved');
+								});
+
+								it('responds with the bundle result', () => {
+									assert.calledOnce(response.set);
+									assert.calledWithExactly(response.set, 'Content-Type', 'text/css');
+									assert.calledOnce(response.send);
+									assert.calledWithExactly(response.send, 'mock-bundle-content');
+								});
+
+								it('logs that the bundle was served', () => {
+									assert.calledWith(defaultedOptions.log.info, 'Bundle "/mock-bundle.css" served');
+								});
+
+								it('does not call `next`', () => {
+									assert.notCalled(next);
+								});
+
+							});
+
+							describe('and saving is unsuccessful', () => {
+								let saveError;
+
+								beforeEach(done => {
+									saveError = new Error('mock save error');
+									fs.promises.writeFile.rejects(saveError);
+									middleware(request, response, error => {
+										caughtError = error;
+										done();
+									});
+								});
+
+								it('does not respond', () => {
+									assert.notCalled(response.set);
+									assert.notCalled(response.send);
+								});
+
+								it('logs that the save was unsuccessful', () => {
+									assert.calledWith(defaultedOptions.log.error, `Bundle "/mock-bundle.css" failed to save: ${saveError.stack}`);
+								});
+
+								it('calls `next` with the file system error', () => {
+									assert.strictEqual(caughtError, saveError);
+								});
+
+							});
+
+						});
+
+						describe('and `options.savePath` is `null`', () => {
+
+							beforeEach(async () => {
+								defaultedOptions.log.info.resetHistory();
+								defaultedOptions.log.error.resetHistory();
+								response.set.resetHistory();
+								response.send.resetHistory();
+								defaultedOptions.savePath = null;
+								await middleware(request, response, next);
+							});
+
+							it('does not save the bundle result to the file system', () => {
+								assert.notCalled(fs.promises.writeFile);
+							});
+
+							it('responds with the bundle result', () => {
+								assert.calledOnce(response.set);
+								assert.calledWithExactly(response.set, 'Content-Type', 'text/css');
+								assert.calledOnce(response.send);
+								assert.calledWithExactly(response.send, 'mock-bundle-content');
+							});
+
+							it('logs that the bundle was served', () => {
+								assert.calledWith(defaultedOptions.log.info, 'Bundle "/mock-bundle.css" served');
+							});
+
+							it('does not call `next`', () => {
+								assert.notCalled(next);
+							});
+
+						});
+
+					});
+
+					describe('and bundling is unsuccessful', () => {
+						let createBundleError;
+
+						beforeEach(done => {
+							defaultedOptions.log.info.resetHistory();
+							defaultedOptions.log.error.resetHistory();
+							response.set.resetHistory();
+							response.send.resetHistory();
+							createBundleError = new Error('mock create bundle error');
+							createBundleFunction.rejects(createBundleError);
+							middleware(request, response, error => {
+								caughtError = error;
+								done();
+							});
+						});
+
+						it('does not respond', () => {
+							assert.notCalled(response.set);
+							assert.notCalled(response.send);
+						});
+
+						it('logs that the bundle was unsuccessful', () => {
+							assert.calledWith(defaultedOptions.log.error, `Bundle "/mock-bundle.css" failed to compile: ${createBundleError.stack}`);
+						});
+
+						it('calls `next` with the bundle error', () => {
+							assert.strictEqual(caughtError, createBundleError);
+						});
+
+					});
+
+				});
+
+				describe('when the request URL does not match a bundle URL', () => {
+					let nextArguments;
+
+					beforeEach(done => {
+						request.path = '/mock-not-a-bundle.css';
+						middleware(request, response, (...args) => {
+							nextArguments = args;
+							done();
+						});
+					});
+
+					it('does not call `createBundleFunction`', () => {
+						assert.notCalled(createBundleFunction);
+					});
+
+					it('calls `next` with no arguments', () => {
+						assert.lengthEquals(nextArguments.length);
+					});
+
+				});
+
+			});
+
+		});
+
 	});
 
 	describe('.defaultOptions', () => {
@@ -58,246 +299,6 @@ describe('lib/resave', () => {
 
 		it('has a `savePath` property', () => {
 			assert.isNull(defaultOptions.savePath);
-		});
-
-	});
-
-	it('returns a function', () => {
-		const resaver = resave();
-		assert.isFunction(resaver);
-	});
-
-	describe('returned (resaver)', () => {
-		let content;
-		let createBundle;
-		let resaver;
-
-		beforeEach(() => {
-			content = 'content';
-			createBundle = sinon.stub();
-			resaver = resave(createBundle);
-		});
-
-		it('returns a function', () => {
-			assert.isFunction(resaver());
-		});
-
-		it('defaults the options', () => {
-			const options = {
-				isUserOptions: true
-			};
-			const defaultedOptions = {
-				isDefaultOptions: true
-			};
-			sinon.stub(Object, 'assign').returns(defaultedOptions);
-			resaver(options);
-			assert.calledOnce(Object.assign);
-			assert.isObject(Object.assign.firstCall.args[0]);
-			assert.strictEqual(Object.assign.firstCall.args[1], resave.defaultOptions);
-			assert.strictEqual(Object.assign.firstCall.args[2], options);
-			Object.assign.restore();
-		});
-
-		describe('returned (middleware)', () => {
-			let middleware;
-			let next;
-			let options;
-			let request;
-			let response;
-
-			beforeEach(() => {
-				options = {
-					basePath: '/base/path',
-					bundles: {
-						'/foo.css': '/source/foo.scss'
-					},
-					log: {
-						error: sinon.spy(),
-						info: sinon.spy()
-					},
-					savePath: null
-				};
-				mime.getType.withArgs('/foo.css').returns('text/css');
-				request = {};
-				response = {
-					writeHead: sinon.stub(),
-					end: sinon.stub()
-				};
-				next = sinon.spy();
-			});
-
-			describe('when the request URL matches a bundle URL', () => {
-
-				beforeEach(() => {
-					request.url = '/foo.css?bar=baz';
-					middleware = resaver(options);
-					middleware(request, response, next);
-				});
-
-				it('calls `createBundle`', () => {
-					assert.calledOnce(createBundle);
-					assert.calledWith(createBundle, '/base/path/source/foo.scss', options);
-					assert.isFunction(createBundle.firstCall.args[2]);
-				});
-
-				describe('and bundling is successful', () => {
-
-					beforeEach(() => {
-						createBundle.yields(null, content);
-						middleware = resaver(options);
-						middleware(request, response, next);
-					});
-
-					it('logs that the bundle was successful', () => {
-						assert.calledWith(options.log.info, 'Bundle "/foo.css" compiled');
-					});
-
-					describe('and `options.savePath` is set', () => {
-
-						beforeEach(() => {
-							response.writeHead.reset();
-							response.end.reset();
-							options.savePath = '/save/path';
-							middleware = resaver(options);
-						});
-
-						describe('and saving is successful', () => {
-
-							beforeEach(() => {
-								fs.writeFile.withArgs('/save/path/foo.css', content).yields(null);
-								middleware(request, response, next);
-							});
-
-							it('saves the bundle result to the file system', () => {
-								assert.calledOnce(fs.writeFile);
-								assert.calledWith(fs.writeFile, '/save/path/foo.css', content);
-							});
-
-							it('logs that the save was successful', () => {
-								assert.calledWith(options.log.info, 'Bundle "/foo.css" saved');
-							});
-
-							it('responds with the bundle result', () => {
-								assert.calledOnce(response.writeHead);
-								assert.calledWith(response.writeHead, 200);
-								assert.deepEqual(response.writeHead.firstCall.args[1], {
-									'Content-Type': 'text/css'
-								});
-								assert.calledOnce(response.end);
-								assert.calledWith(response.end, content);
-							});
-
-							it('logs that the bundle was served', () => {
-								assert.calledWith(options.log.info, 'Bundle "/foo.css" served');
-							});
-
-						});
-
-						describe('and saving is unsuccessful', () => {
-							let error;
-
-							beforeEach(() => {
-								error = new Error('...');
-								fs.writeFile.withArgs('/save/path/foo.css', content).yields(error);
-								middleware(request, response, next);
-							});
-
-							it('does not respond', () => {
-								assert.notCalled(response.writeHead);
-								assert.notCalled(response.end);
-							});
-
-							it('logs that the save was unsuccessful', () => {
-								assert.calledWith(options.log.error, `Bundle "/foo.css" failed to save: ${error.stack}`);
-							});
-
-							it('calls `next` with the file system error', () => {
-								assert.calledOnce(next);
-								assert.calledWith(next, error);
-							});
-
-						});
-
-					});
-
-					describe('and `options.savePath` is `null`', () => {
-
-						beforeEach(() => {
-							response.writeHead.reset();
-							response.end.reset();
-							request.url = '/foo.css?bar=baz';
-							middleware = resaver(options);
-							middleware(request, response, next);
-						});
-
-						it('does not save the bundle result to the file system', () => {
-							assert.notCalled(fs.writeFile);
-						});
-
-						it('responds with the bundle result', () => {
-							assert.calledOnce(response.writeHead);
-							assert.calledWith(response.writeHead, 200);
-							assert.deepEqual(response.writeHead.firstCall.args[1], {
-								'Content-Type': 'text/css'
-							});
-							assert.calledOnce(response.end);
-							assert.calledWith(response.end, content);
-						});
-
-						it('logs that the bundle was served', () => {
-							assert.calledWith(options.log.info, 'Bundle "/foo.css" served');
-						});
-
-					});
-
-				});
-
-				describe('and bundling is unsuccessful', () => {
-					let error;
-
-					beforeEach(() => {
-						error = new Error('...');
-						createBundle.yields(error);
-						middleware(request, response, next);
-					});
-
-					it('does not respond', () => {
-						assert.notCalled(response.writeHead);
-						assert.notCalled(response.end);
-					});
-
-					it('logs that the bundle was unsuccessful', () => {
-						assert.calledWith(options.log.error, `Bundle "/foo.css" failed to compile: ${error.stack}`);
-					});
-
-					it('calls `next` with the bundle error', () => {
-						assert.calledOnce(next);
-						assert.calledWith(next, error);
-					});
-
-				});
-
-			});
-
-			describe('when the request URL does not match a bundle URL', () => {
-
-				beforeEach(() => {
-					request.url = '/bar.css';
-					middleware = resaver(options);
-					middleware(request, response, next);
-				});
-
-				it('does not call `createBundle`', () => {
-					assert.notCalled(createBundle);
-				});
-
-				it('calls `next` with no error', () => {
-					assert.calledOnce(next);
-					assert.isUndefined(next.firstCall.args[0]);
-				});
-
-			});
-
 		});
 
 	});

@@ -3,5 +3,7 @@
 const sinon = require('sinon');
 
 module.exports = {
-	writeFile: sinon.stub()
+	promises: {
+		writeFile: sinon.stub().resolves()
+	}
 };
